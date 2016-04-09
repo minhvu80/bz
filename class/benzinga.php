@@ -15,12 +15,12 @@ class Benzinga
         $this->sleep_time = $sleep_time;
     }
     
-    function getRating(){
+    function getRating($date=""){
         $arrAction  = $this->getAction();
         $arrAnalyst = $this->getAnalyst();
         $foreverloop = true;
+        $date = $date=="" ? date("Y-m-d") : $date;
         while ($foreverloop) {            
-            $date = date("Y-m-d");
             $url     = "http://api.benzinga.com/api/v2/calendar/ratings?token={$this->token}&parameters[date]={$date}&pagesize=1000";
             $data    = file_get_contents($url);
             $arrData = json_decode($data);
@@ -61,16 +61,18 @@ class Benzinga
     function getAction()
     {
         $actions = file("actions.txt");
-        foreach ($actions as $l)
+        foreach ($actions as $l){
             $arrAction[] = strtolower(trim($l, "\r\n"));
+        }
         return $arrAction;
     }
     
     function getAnalyst()
     {
         $analysts = file("analysts.txt");
-        foreach ($analysts as $l)
+        foreach ($analysts as $l){
             $arrAnalyst[] = strtolower(trim($l, "\r\n"));
+        }
         return $arrAnalyst;
     }
 }

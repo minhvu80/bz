@@ -1,11 +1,5 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  * Description of benzinga
  *
@@ -13,34 +7,35 @@
  */
 class Benzinga
 {
-    var $token;
+    public $token;
+    public $sleep_time;
     
-    function __construct(){
+    function __construct($sleep_time=10){
         $this->token = file_get_contents("token.txt");  
+        $this->sleep_time = $sleep_time;
     }
     
     function getRating(){
         $arrAction  = $this->getAction();
         $arrAnalyst = $this->getAnalyst();
-        while (1 == 1) {
-            //$date    = date("Y-m-d");
-            $date    = "2016-04-08";
+        $foreverloop = true;
+        while ($foreverloop) {            
+            $date = date("Y-m-d");
             $url     = "http://api.benzinga.com/api/v2/calendar/ratings?token={$this->token}&parameters[date]={$date}&pagesize=1000";
             $data    = file_get_contents($url);
             $arrData = json_decode($data);
             if(count($arrData)>0){
                 foreach ($arrData->ratings as $a) {
-                
-                
+                    // put ratings into array with timestamp            
                     if (in_array(strtolower($a->analyst), $arrAnalyst) && in_array(strtolower($a->action_company), $arrAction)) {
-                        //if(in_array(strtolower($a->action_company),$arrAction)){
                         $arrDisplay[$a->updated] = $a;
                     }
                  }
             
                 krsort($arrDisplay);
                 $totalCount = count($arrDisplay);
-                if ($currentCount < $totalCount) {
+                // track difference and alert user of new changes
+                if ($currentCount < $totalCount) {                    
                     echo "\n\n" . date("H:i:s", time() + 10800) . "\n\n";
                     exec('powershell -c (New-Object Media.SoundPlayer "C:\Windows\Media\Alarm08.wav").PlaySync()');
                     $currentCount = $totalCount;
@@ -48,19 +43,18 @@ class Benzinga
 
                     foreach ($arrDisplay as $a) {
                         $c++;
-                        echo date("H:i:s", $a->updated + 10800) . "\t" . $a->time . "\t" . $a->ticker . "\t" . substr($a->name, 0, 5) . "\t" . substr($a->action_company, 0, 1) . "\t" . substr($a->rating_current, 0, 3) . "\t" . substr($a->analyst, 0, 10) . "\n";
-                        //if($c>=$maxDisplay) break;
+                        echo date("H:i:s", $a->updated + 10800) . "\t" . $a->time . "\t" . $a->ticker . "\t" . substr($a->name, 0, 5) . "\t" . substr($a->action_company, 0, 1) . "\t" . substr($a->rating_current, 0, 3) . "\t" . substr($a->analyst, 0, 10) . "\n";                        
                     }
-
-
                 }
+                // pause before polling the next call
+                sleep($this->sleep_time);
             }
             else{
                 echo "No data for today $date";
-                break;
+                $foreverloop = false;
             }
             
-            sleep(10);
+            
         }
     }
     
